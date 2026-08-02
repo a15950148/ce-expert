@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Verified
+decay_type: bridge-implementation
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  架构与连接方式随 Bridge 版本变化；server name 变更会导致全文件失效。
+---
+
 # MCP 后端架构 (Architecture)
 
 > 本文件说明 AI Agent 如何通过 **Cheat Engine MCP Bridge** 调用 Cheat Engine。

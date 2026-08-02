@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Verified
+decay_type: methodology
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  分析循环为方法论，不绑定具体工具版本；引用的工具名需随 mcp-tools.md 同步。
+---
+
 # AI Workflow（AI 驱动的分析流程）
 
 > 把「人工在 CE GUI 点击」的教程流程，重构为 AI Agent 可执行的循环。

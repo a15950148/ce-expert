@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Partial
+decay_type: mixed
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  第 1-6 节为通用排查。第 7 节为 Bridge 实现缺陷，逐条标注了衰减类型，Bridge 升版后必须整节复检——缺陷被修复时这些条目会变成误导且不会报错。
+---
+
 # 故障排查模块 (Troubleshooting)
 
 > 处理适配后常见失败。对应适配要求 8。每条都给出「现象 → 原因 → 用 MCP 工具排查 → 参考」。

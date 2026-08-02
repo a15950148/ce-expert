@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Partial
+decay_type: bridge-implementation
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  工具名与参数逐字提取自 Bridge 源码。清单中仅部分工具经实测调用验证，见文件内 MCP Compatibility 节的实测清单；未标注者为源码提取但未实跑。
+---
+
 # MCP 工具适配层 (mcp-tools.md)
 
 > 本文件记录 **Cheat Engine MCP Bridge**（FastMCP server name = `cheatengine`）实际暴露的工具。
@@ -5,6 +19,51 @@
 > 对应适配要求 2。
 >
 > 约定：地址多为字符串（`"0x..."` 或符号）；偏移为整数列表；返回几乎都含 `success` 字段，**先判 `success` 再取数据**。
+
+---
+
+## MCP Compatibility（兼容性与验证状态）
+
+| 项 | 值 |
+|---|---|
+| Bridge 仓库 | https://github.com/miscusi-peek/cheatengine-mcp-bridge |
+| Server name | `cheatengine` |
+| 验证版本 | v12.0.0（`ping` 返回 `CE MCP Bridge v12.0.0 alive`） |
+| 验证 commit | `unknown` —— 未记录。补法：在 Bridge 仓库执行 `git rev-parse --short HEAD` 填入此处 |
+| 验证日期 | 2026-08-03 |
+| 验证环境 | Windows 11 x64 / Cheat Engine + Bridge v12.0.0 |
+| 整体状态 | **Partial** |
+
+### 为什么是 Partial
+
+本清单的工具名与参数是从 Bridge 源码**逐字提取**的，但**提取 ≠ 跑通**。
+下列工具在验证日期当天经过实际调用并确认返回结构：
+
+`ping`、`get_process_info`、`get_address_list`、`read_integer`、`read_memory`、
+`write_memory`、`read_pointer`、`set_data_breakpoint`、`get_breakpoint_hits`、
+`remove_breakpoint`、`disassemble`、`aob_scan_module_unique`、`auto_assemble`、
+`auto_assemble_check`、`find_function_boundaries`、`find_call_references`、`save_table`
+
+**其余工具为源码提取、未实跑。** 调用未实测工具时，应先做一次最小参数试调并检查
+`success` 字段，不要假定返回结构。
+
+### 已知的实现级偏差（v12.0.0）
+
+这些不是文档错误，是 Bridge 当前版本的行为，升版后需复检：
+
+- `auto_assemble` 只执行 `[ENABLE]` 段。单独提交 `[DISABLE]` 段会因符号未注册而返回 `nil`。
+- `save_table` 的 `filename` 必须是 ASCII 路径且用正斜杠，含中文会触发 JSON 解析错误。
+- `create_memory_record` 只能创建地址监视记录，**无法**把 AA 注入脚本挂成可勾选条目。
+- `find_call_references` 在大模块上耗时长，曾出现扫描后桥接连接中断，之后需 `ping` 复检。
+
+完整现象与处理见 `mcp/troubleshooting.md` 第 7 节。
+
+### 工具消失或改名时
+
+不要猜测替代名。按此顺序处理：
+1. 用客户端的工具检索能力确认真实工具名；
+2. 确认不存在 → 走 `SKILL.md` 的 Tool Availability Fallback，降级为 CE GUI 步骤；
+3. 把差异回填到本节，并更新 `verified_bridge_version` 与 `verified_date`。
 
 ---
 

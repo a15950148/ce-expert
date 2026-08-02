@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Verified
+decay_type: methodology
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  四要素（enable/disable/还原/错误处理）为通用规范，与 Bridge 版本无关。
+---
+
 # 修改器开发流程 (Trainer Development)
 
 > 生成可交付的修改器产物，并映射到对应 MCP 工具。对应适配要求 6。

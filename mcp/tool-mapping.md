@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Verified
+decay_type: methodology
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  现象到工具的映射关系。工具名依赖 Bridge，映射逻辑本身与版本无关。
+---
+
 # 工具映射说明 (Tool Mapping) & 工具选择决策树
 
 > 对应适配要求 4（工具选择决策树）与最终交付物「工具映射说明」。

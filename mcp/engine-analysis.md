@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Partial
+decay_type: methodology
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  Unity IL2CPP 路径经实测；Unity Mono 与 Unreal 路径未在本环境实测。
+---
+
 # 游戏引擎分析模块 (Engine Analysis)
 
 > 针对不同游戏引擎的定位策略。对应适配要求 7。
@@ -28,23 +42,54 @@
 
 ---
 
-## 2. Unity IL2CPP（⚠️ 关键规则）
+## 2. Unity IL2CPP（按类型信息可用性分支）
 
-> **不要优先盲目扫描数值。** IL2CPP 把 C# 编译为 C++，类型信息被剥离/混淆，盲目扫描极易误判且效率极低。
+IL2CPP 把 C# 编译为 C++，类型信息被剥离或混淆。
+**入口选择取决于能否拿到可靠的类型信息，而不是取决于「这是 IL2CPP」。**
+先做下面这个判定，再选路径。
 
-**正确顺序：Class → Field → Offset → CE 验证**
+### 判定：类型信息是否可靠？
 
-1. **Class（类定义）**：从 IL2CPP 元数据（如 Il2CppDumper 输出的 `dump.cs` / 符号）取得目标类及其字段的**编译期偏移**。
-2. **Field（字段偏移）**：在 `dump.cs` 中找到 `Class::fieldName` 的相对偏移（如 `0x48`）。
-3. **Offset（定位实例）**：通过 `get_symbol_address` / `get_rtti_classname` 或已知指针链定位**类实例基址**；字段真实地址 = `instance_base + field_offset`。
-4. **CE 验证**：用 `read_integer(instance_base + 0x48)`（或 `read_pointer_chain`）读取，**确认值符合预期**后，再用 `create_structure`/`add_element_to_structure` 固化，最后才做修改或注入。
+判定为可靠需同时满足：
 
-**为什么这样更稳**
-- IL2CPP 值类型多为 float/int 且字段密集，盲扫会产生海量候选。
-- 偏移来自元数据，比运行时扫描更 deterministic；CE 仅作验证与落地。
-- 游戏更新后只需重新 dump 比对偏移变化，不必重扫（见故障排查「版本更新失效」）。
+- 能 dump 出 `global-metadata.dat` / `dump.cs`，且**类名与字段名未被混淆成无意义符号**；
+- 目标字段能在 dump 中定位到明确的 `Class::field` 与编译期偏移；
+- dump 的版本与**当前运行的游戏版本一致**。
 
-**反例（避免）**：直接 `scan_all("当前血量")` 反复 `next_scan`——在 IL2CPP 下耗时且易把无关临时变量当成目标。
+### 路径 A：类型信息可靠 → Class → Field → Offset → CE 验证
+
+1. **Class**：从 IL2CPP 元数据（Il2CppDumper 输出的 `dump.cs` / 符号）取目标类及字段的编译期偏移。
+2. **Field**：在 dump 中找到 `Class::fieldName` 的相对偏移（如 `0x48`）。
+3. **Offset**：用 `get_symbol_address` / `get_rtti_classname` 或已知指针链定位**实例基址**；
+   字段真实地址 = `instance_base + field_offset`。
+4. **CE 验证**：`read_integer(instance_base + 0x48)`（或 `read_pointer_chain`）复核值符合预期，
+   再用 `create_structure` / `add_element_to_structure` 固化，最后才做修改或注入。
+
+**优势**：偏移来自元数据，比运行时扫描更 deterministic；字段密集时不会产生海量候选；
+游戏更新后重新 dump 比对偏移即可，不必重扫（见 `mcp/troubleshooting.md` 版本更新失效）。
+
+### 路径 B：类型信息缺失 / 混淆 / 无法映射 → CE 扫描是合理入口
+
+出现下列任一情况时，**扫描不是偷懒，而是正确选择**：
+
+- 类名字段名被混淆（`Class_0x1A2B` / 单字母符号），dump 出来也对不上业务含义；
+- metadata 被加密、自定义打包，或 dump 工具与游戏版本不兼容；
+- 字段被包装（属性 getter/setter、结构体嵌套、装箱），编译期偏移不指向实际存储；
+- 显示值经过运行时计算（`基础值 × 系数`），字段值与 UI 不一致；
+- 对象生命周期短或被 GC 移动，静态偏移无法稳定定位实例。
+
+此时走常规路径：`scan_all` → 变化筛选 `next_scan` → `find_references` 定位访问代码 →
+从指令回溯对象基址（`workflows/08-trace-back-to-base.md`）→ `dissect_structure` 还原布局。
+**用运行时观察反推结构，比信任一份对不上的 dump 更可靠。**
+
+### 混合用法（常见且推荐）
+
+两条路径不互斥：用 dump 缩小范围（知道字段大致偏移区间），用扫描确认实际地址；
+或先扫到地址，再回 dump 反查它属于哪个类的哪个字段。
+
+> **不要把「这是 IL2CPP」当成禁止内存扫描的理由。**
+> 真正要避免的是**在类型信息可靠时仍然盲扫**——那才是浪费。
+> 类型信息不可用时，扫描是唯一入口。
 
 ---
 
@@ -76,5 +121,6 @@
 | 引擎 | 首选定位 | 核心工具 |
 |---|---|---|
 | Unity Mono | 类名:字段 符号 | `get_symbol_address`, `evaluate_lua`(mono API) |
-| Unity IL2CPP | dump 偏移 + 实例基址 | `get_rtti_classname`, `read_pointer_chain`, `create_structure` |
+| Unity IL2CPP（类型信息可靠） | dump 偏移 + 实例基址 | `get_rtti_classname`, `read_pointer_chain`, `create_structure` |
+| Unity IL2CPP（混淆 / 无 dump） | 数值扫描 + 代码访问回溯 | `scan_all`, `next_scan`, `find_references`, `dissect_structure` |
 | Unreal | RTTI + GObjects 遍历 | `get_rtti_classname`, `dissect_structure`, `enum_modules` |

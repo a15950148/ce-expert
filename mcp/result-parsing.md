@@ -1,3 +1,17 @@
+---
+mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
+mcp_server_name: cheatengine
+verified_bridge_version: v12.0.0
+verified_commit: unknown
+verified_date: 2026-08-03
+verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
+compatibility: Partial
+decay_type: bridge-implementation
+recheck_trigger: Bridge 升版、工具改名、参数或返回结构变更
+note: >-
+  返回结构（success/error 字段）由 Bridge 决定，改动会静默破坏解析假设。
+---
+
 # MCP 返回结果解析
 
 > AI 如何理解 MCP 工具返回的数据并决定下一步。对应适配要求 5。
