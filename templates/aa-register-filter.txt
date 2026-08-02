@@ -1,0 +1,35 @@
+// 共享代码对象过滤模板（Register-based Object Filter）
+// 场景：一条指令同时服务玩家与敌人（共享代码），需仅对特定对象生效。
+// 关键：在跳转目标里读取能区分对象的判别量（team / object id / this 指针），
+//       命中目标才执行自定义逻辑，否则保持原行为。
+//
+// 判别量优先级（从高到低）：对象指针本身 > 队伍/阵营字段 > 对象类型 id > 距离/索引。
+// 警告：不要依赖"看起来没变的寄存器"做判别；先多次命中记录各寄存器，选稳定且有区分度的。
+
+aobscanmodule(INJECT,TargetModule.exe, AA BB CC DD)
+alloc(newmem,1024,INJECT)
+label(return)
+
+newmem:
+  // 原指令（示例：把新血量写入 [rax+0x10]）
+  mov [rax+0x10], edx
+  // ---- 判别 ----
+  push rbx
+  mov ebx, [rax+0x08]       // 读判别字段（示例：team，需按实际结构替换偏移）
+  cmp ebx, 1                // 1 = 玩家（需按实际枚举值替换）
+  pop rbx
+  jne @skip                 // 非目标对象：跳过，保持原行为
+  // ---- 自定义逻辑（仅对玩家）----
+  mov [rax+0x10], 9999      // 玩家：强制回满
+@skip:
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+INJECT:
+  db AA BB CC DD
+dealloc(newmem)

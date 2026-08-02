@@ -1,0 +1,25 @@
+[ENABLE]
+// 1. AOB 特征码：替换为实际指令字节，确保唯一（?? 可通配易变字节）
+aobscanmodule(INJECT,TargetModule.exe,AA BB CC DD)
+// 2. 分配 code cave：1024 字节通常够用，不够可加大
+alloc(newmem,1024,INJECT)
+label(return)
+
+newmem:
+  // 3. 自定义逻辑写在这里
+  // 4. 必须重放被 jmp 覆盖掉的原指令（否则逻辑缺失）
+  // displaced original instruction(s)
+  jmp return
+
+INJECT:
+  jmp newmem
+  // 5. 若原指令 > 5 字节，剩余字节用 nop 填充；若原指令 = 5 字节，删除此行
+  nop
+return:
+
+[DISABLE]
+INJECT:
+  // 6. 填入原指令的精确字节，确保可还原
+  // exact original bytes
+
+dealloc(newmem)

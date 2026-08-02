@@ -1,0 +1,8 @@
+# 本机安装元数据，各机器不同，不纳入版本控制
+_user_meta.json
+
+# 编辑器 / 系统垃圾
+.DS_Store
+Thumbs.db
+*.swp
+*~

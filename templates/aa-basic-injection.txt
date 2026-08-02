@@ -1,0 +1,31 @@
+[ENABLE]
+// 基础代码注入模板（Basic Injection）
+// 场景：把"改写某值的指令"替换为自定义逻辑（如写死为 9999）。
+// 适用：已用「查找写入代码」定位到目标指令，且模块基址稳定或可用 AOB。
+//
+// 用法：
+//  1. 用 aobscanmodule 或 "模块名"+偏移 定位目标指令（INJECT）。
+//  2. alloc 一块新内存，把原指令搬过去，追加自定义逻辑后 jmp return。
+//  3. 在 INJECT 处 jmp 到新内存；原指令占几字节就用几个 nop 占位。
+//  4. [DISABLE] 用 db 精确还原原始字节，再 dealloc。
+
+aobscanmodule(INJECT,TargetModule.exe, 89 01 ?? ??)   // 示例字节：mov [rcx],eax 为 89 01，后接通配以增强唯一性（请替换为真实字节）。注意：CE 仅支持整字节通配 ??，不支持半字节通配如 5?
+alloc(newmem,512,INJECT)
+label(return)
+
+newmem:
+  mov eax, 9999              // 自定义：把要写入的值改成 9999
+  mov [rcx], eax            // 原指令（保持原始语义，仅改写入值）
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop                       // 若原指令多于 5 字节，补足 nop 使总长度一致
+
+return:
+
+[DISABLE]
+INJECT:
+  db 89 01                  // 精确还原原始字节（与目标指令长度一致）
+
+dealloc(newmem)

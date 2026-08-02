@@ -1,0 +1,29 @@
+[ENABLE]
+// 启用逻辑（Enable）
+// - 用 aobscanmodule 或 "模块"+偏移 定位目标指令。
+// - alloc 新内存，搬运并修改指令，跳回原流程。
+// - 用 label 标记返回点，保证跳转对称。
+// - 必要时 registerSymbol 注册关键地址，供 Lua / 其他记录复用。
+
+aobscanmodule(INJECT,TargetModule.exe, AA BB CC DD)
+alloc(newmem,1024,INJECT)
+label(return)
+// registerSymbol("myHook",INJECT)   // 可选：注册符号
+
+newmem:
+  // 自定义逻辑
+  // displaced original instruction(s)
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+// 精确还原（Disable）——必须还原成启用前逐字节一致的原始指令
+INJECT:
+  db AA BB CC DD            // 用内存查看器抄下的原始字节
+
+dealloc(newmem)
+// unregisterSymbol("myHook") // 若启用时注册过，此处注销
