@@ -2,7 +2,7 @@
 mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
 mcp_server_name: cheatengine
 verified_bridge_version: v12.0.0
-verified_commit: unknown
+verified_ref: unknown
 verified_date: 2026-08-03
 verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
 compatibility: Partial
@@ -159,13 +159,21 @@ note: >-
 
 ## D. 扫描 (Scanning)
 
+> ⚠️ **CE 里"扫描方式"与"数值类型"是两个独立维度，不要混为一谈，也不要按 CE GUI 术语猜测 MCP 参数。**
+> - **扫描方式（scan mode / 比较方向）**：`exact` / `changed` / `increased` / `decreased` / `unchanged` / `bigger` / `smaller` —— 决定"拿新值和旧结果怎么比"。
+> - **数值类型（value type）**：`byte` / `word` / `dword` / `qword` / `float` / `double` / `string` —— 决定"按多少字节、什么编码去读"。
+> Bridge 各工具对这两者的命名 / 聚合方式并不统一（对比下方 `scan_all` 的 `type` 与 `persistent_scan_*` 拆开的 `type`+`scan_option`），
+> **调用前务必按实际工具的 Schema 确认 `value`、扫描方式、数值类型分别怎么传，不要直接把 CE GUI 的参数名映射到 MCP 参数。**
+
 ### scan_all(value: str, type: str="exact", protection: str="+W-C")
-- **功能**：首次值扫描。`type` 可为 `exact`/`string` 等；`protection` 默认可写不可执行。
+- **功能**：首次值扫描。⚠️ 此处 `type` 的语义以 Bridge 实际 Schema 为准——它表面像"扫描方式"，
+  但不同版本里也可能夹带数值类型含义，**不要假定**，先查 Schema。
 - **返回**：`{success, count}`。
 - **场景**：已知当前值（金币=15000）→ 首扫。
+- **调用前**：检查工具 Schema，确认 `value` 的写法（字符串）、扫描方式与数值类型分别由哪个参数承载。
 
 ### next_scan(value: str, scan_type: str="exact")
-- **功能**：在上一轮结果上过滤。`scan_type` ∈ `exact|increased|decreased|changed|unchanged|bigger|smaller`。
+- **功能**：在上一轮结果上过滤。`scan_type` 这里是**扫描方式**（比较方向），取值 `exact|increased|decreased|changed|unchanged|bigger|smaller`；它**不是**数值类型。
 - **返回**：`{success, count}`。
 - **场景**：改变数值后再次扫描收敛结果（对应「未知值」流程用 `increased/decreased/changed`）。
 
@@ -192,8 +200,15 @@ note: >-
 - **场景**：定位硬编码字符串（如错误码、按钮文本）。
 
 ### generate_signature(address: str)
-- **返回**：该地址处的唯一 AOB 签名。
+- **返回**：该地址处的 AOB 签名，并标注其在**当前进程 / 当前版本**内是否唯一。
 - **场景**：拿到一个地址后自动生成可复用的注入特征。
+- ⚠️ **"当前唯一" ≠ "跨版本稳定"。** 生成的签名只表示它在**这一刻**的进程 / 版本里唯一，必须额外验证：
+  1. **游戏重启后是否仍唯一**（地址随机化 / ASLR 会让原字节失效）。
+  2. **目标版本更新后是否仍匹配**（补丁会改变字节）。
+  3. **签名是否含有易变地址**（绝对地址、重定位字节 —— 应通配或避开）。
+  4. **是否跨模块误匹配**（限定模块范围，优先用 `*_module*` 变体）。
+  5. **是否应限制模块范围**（`aob_scan_module_unique` 优于无范围的 `aob_scan_unique`）。
+  稳定性 = 唯一性 × 重启验证 × 版本验证 × 模块约束，缺一不可。
 
 ### pointer_rescan(value: str, previous_results_file: str=None)
 - **功能**：在地址变化后，用当前值对旧结果做指针重扫，找出能稳定指向该值的基址+偏移。

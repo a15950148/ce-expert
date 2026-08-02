@@ -2,7 +2,7 @@
 mcp_bridge_repo: https://github.com/miscusi-peek/cheatengine-mcp-bridge
 mcp_server_name: cheatengine
 verified_bridge_version: v12.0.0
-verified_commit: unknown
+verified_ref: unknown
 verified_date: 2026-08-03
 verified_env: Windows 11 x64 / Cheat Engine MCP Bridge v12.0.0
 compatibility: Partial
